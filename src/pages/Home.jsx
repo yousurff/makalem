@@ -1,9 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { Link } from 'react-router-dom'
-
-// 1. ADIM: Resmi import et
-// NOT: 'background.png' dosyanızın 'src/assets/' klasöründe olduğundan emin olun.
 import backgroundImg from '../assets/background.png'
 
 export default function Home() {
@@ -37,13 +34,11 @@ export default function Home() {
       
       {/* 2. ADIM: Resmi bu kutunun arka planına ekle */}
       <section className="relative bg-[#faf7f2] overflow-hidden rounded-xl shadow-md border-2 border-stone-300">
-        
-        {/* EKLEME: Silik Arka Plan Resmi */}
-        {/* absolute: Kutunun içinde serbest dolaşır. inset-0: Dört kenara yapışır. object-cover: Kutuyu doldurur. opacity-10: Çok silik yapar (değeri artırıp azaltabilirsiniz). z-0: İçeriğin arkasında kalmasını sağlar. */}
+
         <img 
           src={backgroundImg} 
           alt="Background Pattern" 
-          className="absolute inset-0 w-full h-full object-cover opacity-10 z-0 pointer-events-none" 
+          className="absolute inset-0 w-full h-full object-cover opacity-50 z-0 pointer-events-none" 
         />
 
         <div className="max-w-7xl mx-auto relative z-10"> {/* relative z-10: İçeriğin resmin üstünde kalmasını sağlar */}
