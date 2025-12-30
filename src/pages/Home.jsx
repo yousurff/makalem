@@ -73,7 +73,7 @@ export default function Home() {
         ) : (
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             {tezler.map((tez) => (
-              <div key={tez.thesis_no} className="group bg-[#faf7f2] border-2 border-stone-300 rounded-xl p-6 shadow-sm hover:shadow-xl hover:border-amber-700 transition-all duration-300 flex flex-col h-full relative overflow-hidden">
+              <Link to={`/thesis/${tez.thesis_no}`} key={tez.thesis_no} className="group bg-[#faf7f2] border-2 border-stone-300 rounded-xl p-6 shadow-sm hover:shadow-xl hover:border-amber-700 transition-all duration-300 flex flex-col h-full relative overflow-hidden block">
                  <div className="absolute top-0 right-0 -mt-4 -mr-4 w-12 h-12 bg-amber-900/10 rotate-45 transform"></div>
 
                 <div className="flex justify-between items-start mb-4">
@@ -102,7 +102,7 @@ export default function Home() {
                     <span className="text-stone-600 font-semibold bg-stone-200 px-2 rounded">{tez.language?.language_name}</span>
                   </div>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         )}
