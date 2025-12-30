@@ -1,0 +1,1 @@
+// Footer.jsx dosyası oluşturuldu.

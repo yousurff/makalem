@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Tüm site genelinde Times New Roman kullanımı */
+body {
+  font-family: 'Times New Roman', Times, serif;
+}
+
+/* Başlıklar ve diğer alanlar için de garantiye alalım */
+h1, h2, h3, h4, h5, h6, p, span, div, a, button, input, select {
+  font-family: 'Times New Roman', Times, serif !important;
+}

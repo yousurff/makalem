@@ -1,0 +1,1 @@
+// ThesisCard.jsx dosyası oluşturuldu.
