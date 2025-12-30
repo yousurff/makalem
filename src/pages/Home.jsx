@@ -1,4 +1,3 @@
-// src/pages/Home.jsx - TIKLANABİLİR KARTLAR
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { Link } from 'react-router-dom'
@@ -19,7 +18,7 @@ export default function Home() {
         if (error) throw error
         setTezler(data)
       } catch (err) {
-        console.error('Veri hatası:', err)
+        console.error('Data error:', err)
       } finally {
         setYukleniyor(false)
       }
@@ -31,28 +30,27 @@ export default function Home() {
 
   return (
     <div className="space-y-12 p-4">
-      {/* Hero Alanı */}
       <section className="relative bg-[#faf7f2] overflow-hidden rounded-xl shadow-md border-2 border-stone-300">
         <div className="max-w-7xl mx-auto">
           <div className="relative z-10 pb-8 sm:pb-16 md:pb-20 lg:max-w-2xl lg:w-full lg:pb-28 xl:pb-32 p-6 sm:p-10">
             <main className="mt-10 mx-auto max-w-7xl sm:mt-12 md:mt-16 lg:mt-20 xl:mt-28">
               <div className="sm:text-center lg:text-left">
                 <h1 className="text-4xl tracking-tight font-extrabold text-amber-950 sm:text-5xl md:text-6xl">
-                  <span className="block xl:inline">Akademik Bilgiye</span>{' '}
-                  <span className="block text-amber-800 xl:inline">Hızlı Erişim</span>
+                  <span className="block xl:inline">Academic Knowledge</span>{' '}
+                  <span className="block text-amber-800 xl:inline">Quick Access</span>
                 </h1>
                 <p className="mt-3 text-lg text-stone-700 sm:mt-5 sm:max-w-xl sm:mx-auto md:mt-5 md:text-xl lg:mx-0 font-medium">
-                  Kütüphanemizdeki binlerce yüksek lisans ve doktora tezine tek noktadan ulaşın.
+                  Access thousands of master's and PhD theses in our library from a single point.
                 </p>
                 <div className="mt-8 sm:flex sm:justify-center lg:justify-start gap-4">
                   <div className="rounded-md shadow">
                     <Link to="/search" className="w-full flex items-center justify-center px-8 py-4 border border-transparent text-lg font-bold rounded-md text-amber-50 bg-amber-900 hover:bg-amber-800 transition-colors">
-                      Kütüphanede Ara
+                      Search Library
                     </Link>
                   </div>
                   <div className="mt-3 sm:mt-0">
                     <Link to="/submit" className="w-full flex items-center justify-center px-8 py-4 border-2 border-amber-900 text-lg font-bold rounded-md text-amber-900 bg-[#f5efe6] hover:bg-amber-100 transition-colors">
-                      Tez Ekle
+                      Submit Thesis
                     </Link>
                   </div>
                 </div>
@@ -62,32 +60,25 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Tez Listesi */}
       <section>
         <div className="flex items-center justify-between mb-6 border-b-2 border-stone-300 pb-4">
-          <h2 className="text-3xl font-bold text-amber-950">Son Eklenen Eserler</h2>
-          <Link to="/search" className="text-amber-800 hover:text-amber-950 font-semibold text-lg">Tüm Koleksiyon &rarr;</Link>
+          <h2 className="text-3xl font-bold text-amber-950">Recently Added Theses</h2>
+          <Link to="/search" className="text-amber-800 hover:text-amber-950 font-semibold text-lg">Full Collection &rarr;</Link>
         </div>
         
         {tezler.length === 0 ? (
            <div className="text-center py-16 bg-[#f5efe6] rounded-xl border-2 border-dashed border-stone-400">
-             <p className="text-stone-600 text-xl font-medium">Henüz yayınlanmış eser bulunamadı.</p>
+             <p className="text-stone-600 text-xl font-medium">No published theses found yet.</p>
            </div>
         ) : (
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             {tezler.map((tez) => (
-              // DEĞİŞİKLİK BURADA: div yerine Link kullanıldı
-              <Link 
-                to={`/thesis/${tez.thesis_no}`} 
-                key={tez.thesis_no} 
-                className="group bg-[#faf7f2] border-2 border-stone-300 rounded-xl p-6 shadow-sm hover:shadow-xl hover:border-amber-700 transition-all duration-300 flex flex-col h-full relative overflow-hidden cursor-pointer"
-              >
-                 {/* Dekoratif köşe */}
+              <div key={tez.thesis_no} className="group bg-[#faf7f2] border-2 border-stone-300 rounded-xl p-6 shadow-sm hover:shadow-xl hover:border-amber-700 transition-all duration-300 flex flex-col h-full relative overflow-hidden">
                  <div className="absolute top-0 right-0 -mt-4 -mr-4 w-12 h-12 bg-amber-900/10 rotate-45 transform"></div>
 
                 <div className="flex justify-between items-start mb-4">
                   <span className={`inline-flex items-center px-3 py-1 rounded-md text-sm font-bold border ${tez.type === 'PhD' ? 'bg-amber-100 text-amber-900 border-amber-300' : 'bg-stone-200 text-stone-800 border-stone-400'}`}>
-                    {tez.type === 'PhD' ? 'Doktora' : 'Yüksek Lisans'}
+                    {tez.type === 'PhD' ? 'PhD' : "Master's"}
                   </span>
                   <span className="text-lg font-bold text-stone-600 bg-[#eaddc5] px-3 py-1 rounded-md border border-[#d6c7a8]">{tez.year}</span>
                 </div>
@@ -111,7 +102,7 @@ export default function Home() {
                     <span className="text-stone-600 font-semibold bg-stone-200 px-2 rounded">{tez.language?.language_name}</span>
                   </div>
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
         )}

@@ -10,7 +10,6 @@ export default function ManageTheses() {
 
   const fetchTheses = async () => {
     try {
-      // TÜM TEZLERİ GETİR (Durum fark etmeksizin)
       const { data, error } = await supabase
         .from('thesis')
         .select(`*, author:person!author_id(first_name, last_name)`)
@@ -19,7 +18,7 @@ export default function ManageTheses() {
       if (error) throw error
       setTheses(data)
     } catch (error) {
-      alert('Hata: ' + error.message)
+      alert('Error: ' + error.message)
     } finally {
       setYukleniyor(false)
     }
@@ -29,32 +28,27 @@ export default function ManageTheses() {
     fetchTheses()
   }, [])
 
-  // GÜNCELLENEN SİLME FONKSİYONU
   const handleDelete = async (id) => {
-    if (!window.confirm('DİKKAT! Bu tezi kalıcı olarak silmek üzeresiniz. Onaylıyor musunuz?')) return
+    if (!window.confirm('WARNING! You are about to permanently delete this thesis. Do you confirm?')) return
 
     try {
-      // ADIM 1: Önce teze bağlı anahtar kelimeleri (Thesis_Keyword) sil
       const { error: keywordError } = await supabase.from('thesis_keyword').delete().eq('thesis_no', id)
-      if (keywordError) console.log("Keyword silinirken uyarı:", keywordError)
+      if (keywordError) console.log("Warning while deleting keyword:", keywordError)
 
-      // ADIM 2: Sonra teze bağlı konuları (Thesis_Subject_Topic) sil
       const { error: topicError } = await supabase.from('thesis_subject_topic').delete().eq('thesis_no', id)
-      if (topicError) console.log("Topic silinirken uyarı:", topicError)
+      if (topicError) console.log("Warning while deleting topic:", topicError)
 
-      // ADIM 3: Artık bağı kalmadığı için Tezi silebiliriz
       const { error } = await supabase.from('thesis').delete().eq('thesis_no', id)
 
       if (error) throw error
       
-      alert('Tez başarıyla silindi.')
-      fetchTheses() // Listeyi yenile
+      alert('Thesis successfully deleted.')
+      fetchTheses() 
     } catch (error) {
-      alert('Silme hatası: ' + error.message)
+      alert('Deletion error: ' + error.message)
     }
   }
 
-  // Basit istemci tarafı arama
   const filteredTheses = theses.filter(t => 
     t.title.toLowerCase().includes(filter.toLowerCase()) || 
     (t.author?.first_name + ' ' + t.author?.last_name).toLowerCase().includes(filter.toLowerCase())
@@ -64,7 +58,7 @@ export default function ManageTheses() {
     <div className="max-w-6xl mx-auto">
       <Link to="/admin" className="flex items-center text-stone-600 hover:text-amber-900 mb-6 font-bold transition-colors w-fit">
         <ArrowLeft className="w-5 h-5 mr-2" />
-        Yönetim Paneline Dön
+        Return to Dashboard
       </Link>
 
       <div className="bg-[#faf7f2] shadow-xl rounded-xl overflow-hidden border-2 border-stone-300">
@@ -72,38 +66,37 @@ export default function ManageTheses() {
           <div className="flex items-center gap-3">
             <BookOpen className="w-8 h-8" />
             <div>
-              <h1 className="text-2xl font-bold font-serif">Tüm Tezlerin Yönetimi</h1>
-              <p className="text-amber-200 text-sm">Arşivdeki tüm eserleri düzenleyin veya silin.</p>
+              <h1 className="text-2xl font-bold font-serif">Management of All Theses</h1>
+              <p className="text-amber-200 text-sm">Edit or delete all works in the archive.</p>
             </div>
           </div>
           <div className="text-amber-200 font-bold text-xl">
-             Toplam: {filteredTheses.length}
+             Total: {filteredTheses.length}
           </div>
         </div>
 
         <div className="p-6">
-          {/* Arama Çubuğu */}
           <div className="relative mb-6">
             <Search className="absolute left-3 top-3 text-stone-400" size={20} />
             <input 
               type="text" 
-              placeholder="Tez başlığı veya yazar ara..." 
+              placeholder="Search by thesis title or author..." 
               className="w-full pl-10 p-3 border-2 border-stone-300 rounded-lg focus:border-amber-900 focus:ring-amber-900"
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
             />
           </div>
 
-          {yukleniyor ? <div className="text-center">Yükleniyor...</div> : (
+          {yukleniyor ? <div className="text-center">Loading...</div> : (
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-stone-200 text-stone-700 text-sm uppercase tracking-wider">
                     <th className="p-4 border-b-2 border-stone-300">No</th>
-                    <th className="p-4 border-b-2 border-stone-300">Durum</th>
-                    <th className="p-4 border-b-2 border-stone-300">Başlık</th>
-                    <th className="p-4 border-b-2 border-stone-300">Yazar</th>
-                    <th className="p-4 border-b-2 border-stone-300 text-right">İşlemler</th>
+                    <th className="p-4 border-b-2 border-stone-300">Status</th>
+                    <th className="p-4 border-b-2 border-stone-300">Title</th>
+                    <th className="p-4 border-b-2 border-stone-300">Author</th>
+                    <th className="p-4 border-b-2 border-stone-300 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-stone-200">
@@ -112,7 +105,7 @@ export default function ManageTheses() {
                       <td className="p-4 font-mono text-sm text-stone-500">#{tez.thesis_no}</td>
                       <td className="p-4">
                         <span className={`px-2 py-1 rounded text-xs font-bold ${tez.approval_status === 'published' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                          {tez.approval_status === 'published' ? 'Yayında' : 'Bekliyor'}
+                          {tez.approval_status === 'published' ? 'Published' : 'Pending'}
                         </span>
                       </td>
                       <td className="p-4 font-bold text-stone-800 max-w-md truncate" title={tez.title}>
@@ -125,14 +118,14 @@ export default function ManageTheses() {
                         <Link 
                           to={`/admin/edit-thesis/${tez.thesis_no}`}
                           className="p-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition"
-                          title="Düzenle"
+                          title="Edit"
                         >
                           <Edit size={18} />
                         </Link>
                         <button 
                           onClick={() => handleDelete(tez.thesis_no)}
                           className="p-2 bg-red-100 text-red-700 rounded hover:bg-red-200 transition"
-                          title="Sil"
+                          title="Delete"
                         >
                           <Trash2 size={18} />
                         </button>

@@ -1,148 +1,120 @@
-// src/pages/Search.jsx - KİTAP GÖRÜNÜMLÜ HALİ
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { Link } from 'react-router-dom'
+import { Search as SearchIcon, Filter, ArrowRight, BookOpen } from 'lucide-react'
 
 export default function Search() {
-  const [tezler, setTezler] = useState([])
-  const [aramaMetni, setAramaMetni] = useState('')
-  const [dilFiltresi, setDilFiltresi] = useState('Hepsi')
-  const [turFiltresi, setTurFiltresi] = useState('Hepsi')
-  const [yukleniyor, setYukleniyor] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [results, setResults] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [hasSearched, setHasSearched] = useState(false)
 
-  useEffect(() => {
-    async function verileriGetir() {
-      try {
-        const { data, error } = await supabase
-          .from('thesis')
-          .select(`*, author:person!author_id(first_name, last_name), language:language(language_name), institute:institute(institute_name, university:university(university_name))`)
-          .eq('approval_status', 'published')
+  const handleSearch = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    setHasSearched(true)
 
-        if (error) throw error
-        setTezler(data)
-      } catch (error) {
-        console.error('Veri çekme hatası:', error)
-      } finally {
-        setYukleniyor(false)
+    try {
+      let query = supabase
+        .from('thesis')
+        .select(`
+          *,
+          author:person!author_id(first_name, last_name),
+          language:language(language_name),
+          institute:institute(institute_name, university(university_name))
+        `)
+        .eq('approval_status', 'published')
+
+      if (searchTerm.trim()) {
+        query = query.or(`title.ilike.%${searchTerm}%,abstract.ilike.%${searchTerm}%`)
       }
-    }
-    verileriGetir()
-  }, [])
 
-  const filtrelenmisTezler = tezler.filter((tez) => {
-    const metinUygun = tez.title.toLowerCase().includes(aramaMetni.toLowerCase()) || tez.abstract.toLowerCase().includes(aramaMetni.toLowerCase())
-    const dilUygun = dilFiltresi === 'Hepsi' || tez.language?.language_name === dilFiltresi
-    const turUygun = turFiltresi === 'Hepsi' || tez.type === turFiltresi
-    return metinUygun && dilUygun && turUygun
-  })
+      const { data, error } = await query
+
+      if (error) throw error
+      setResults(data)
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
-    <div className="flex flex-col md:flex-row gap-8 p-4">
-      
-      {/* SOL TARAF: Filtre Paneli - Kütüphane Rafı Görünümü */}
-      <aside className="w-full md:w-72 flex-shrink-0">
-        {/* bg-white yerine bg-[#faf7f2] ve koyu çerçeve */}
-        <div className="bg-[#faf7f2] p-6 rounded-xl shadow-md border-2 border-stone-400 sticky top-28">
-          <h2 className="text-xl font-bold text-amber-950 mb-6 border-b-2 border-stone-300 pb-2">Koleksiyon Filtreleri</h2>
-          
-          <div className="space-y-6">
-            {/* Input alanları beyaz değil, koyu krem (bg-stone-100) */}
-            <div>
-              <label className="block text-base font-bold text-stone-800 mb-2">Arama</label>
-              <input
-                type="text"
-                placeholder="Başlık veya özet içinde..."
-                className="w-full bg-stone-100 border-2 border-stone-300 rounded-md shadow-sm focus:ring-amber-900 focus:border-amber-900 p-3 text-stone-900 font-medium placeholder-stone-500"
-                value={aramaMetni}
-                onChange={(e) => setAramaMetni(e.target.value)}
-              />
-            </div>
+    <div className="max-w-7xl mx-auto space-y-8 min-h-[60vh]">
+      <div className="bg-[#faf7f2] p-10 rounded-xl shadow-lg border-2 border-stone-300 text-center">
+        <h1 className="text-3xl font-bold text-amber-950 font-serif mb-4">Detailed Thesis Search</h1>
+        <p className="text-stone-600 mb-8 max-w-2xl mx-auto">
+          Search our archive by thesis title, abstract content, or keywords.
+        </p>
 
-            <div>
-              <label className="block text-base font-bold text-stone-800 mb-2">Tez Türü</label>
-              <select 
-                className="w-full bg-stone-100 border-2 border-stone-300 rounded-md shadow-sm p-3 text-stone-900 font-medium focus:ring-amber-900 focus:border-amber-900"
-                value={turFiltresi}
-                onChange={(e) => setTurFiltresi(e.target.value)}
-              >
-                <option value="Hepsi">Tüm Türler</option>
-                <option value="Master">Yüksek Lisans</option>
-                <option value="PhD">Doktora</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-base font-bold text-stone-800 mb-2">Dil</label>
-              <select 
-                className="w-full bg-stone-100 border-2 border-stone-300 rounded-md shadow-sm p-3 text-stone-900 font-medium focus:ring-amber-900 focus:border-amber-900"
-                value={dilFiltresi}
-                onChange={(e) => setDilFiltresi(e.target.value)}
-              >
-                <option value="Hepsi">Tüm Diller</option>
-                <option value="Türkçe">Türkçe</option>
-                <option value="English">English</option>
-                <option value="Deutsch">Deutsch</option>
-                <option value="Français">Français</option>
-              </select>
-            </div>
-            
-            <div className="text-sm font-semibold text-stone-600 pt-6 border-t-2 border-stone-300">
-              Bu rafta <strong>{filtrelenmisTezler.length}</strong> eser bulundu.
-            </div>
+        <form onSubmit={handleSearch} className="max-w-3xl mx-auto flex gap-4">
+          <div className="relative flex-1">
+            <SearchIcon className="absolute left-4 top-4 text-stone-400" />
+            <input 
+              type="text" 
+              placeholder="Type keywords (e.g. Artificial Intelligence, History)..." 
+              className="w-full pl-12 p-4 rounded-lg border-2 border-stone-300 focus:border-amber-900 focus:ring-amber-900 text-lg shadow-sm"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
-        </div>
-      </aside>
+          <button type="submit" className="bg-amber-900 text-amber-50 px-8 py-4 rounded-lg font-bold text-lg hover:bg-amber-800 transition shadow-md flex items-center gap-2">
+            <Filter size={20} /> Search
+          </button>
+        </form>
+      </div>
 
-      {/* SAĞ TARAF: Sonuç Listesi */}
-      <main className="flex-1">
-        <h1 className="text-3xl font-bold text-amber-950 mb-8 border-b-2 border-stone-300 pb-4">Kütüphane Arşivi</h1>
-
-        {yukleniyor ? (
-          <div className="text-center py-20 text-amber-900 font-bold text-xl">Raflar taranıyor...</div>
-        ) : filtrelenmisTezler.length === 0 ? (
-          <div className="bg-[#faf7f2] p-12 rounded-xl shadow-sm text-center text-stone-600 border-2 border-dashed border-stone-400 font-medium text-lg">
-            Aradığınız kriterlere uygun eser bu rafta yok.
-          </div>
+      <div className="space-y-6">
+        {loading ? (
+           <div className="text-center py-10">
+             <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-amber-900 border-t-transparent"></div>
+           </div>
         ) : (
-          <div className="space-y-6">
-            {filtrelenmisTezler.map((tez) => (
-              <Link 
-                to={`/thesis/${tez.thesis_no}`} 
-                key={tez.thesis_no} 
-                // Kartlar beyaz yerine kağıt rengi
-                className="block bg-[#faf7f2] p-8 rounded-xl shadow-sm border-2 border-stone-300 hover:border-amber-800 hover:shadow-xl transition-all duration-300 group relative"
-              >
-                {/* Sol tarafta dekoratif bir "cilt" şeridi */}
-                <div className="absolute left-0 top-0 bottom-0 w-2 bg-amber-900/20 rounded-l-xl group-hover:bg-amber-900/40 transition-colors"></div>
-                
-                <div className="pl-4 flex justify-between items-start">
-                  <div className="flex-1">
-                     <div className="flex gap-3 mb-3">
-                        <span className={`inline-flex items-center px-3 py-1 rounded-md text-sm font-bold border ${tez.type === 'PhD' ? 'bg-amber-100 text-amber-900 border-amber-300' : 'bg-stone-200 text-stone-800 border-stone-400'}`}>
-                          {tez.type}
-                        </span>
-                        <span className="text-stone-600 font-semibold bg-stone-200 px-2 py-1 rounded text-sm border border-stone-300">{tez.year}</span>
-                     </div>
-                    <h3 className="text-2xl font-bold text-amber-950 group-hover:text-amber-800 transition-colors leading-snug">
-                      {tez.title}
+          <>
+            {hasSearched && (
+              <h2 className="text-2xl font-bold text-stone-800 border-b-2 border-stone-200 pb-2">
+                Search Results: {results.length} found
+              </h2>
+            )}
+
+            {results.length > 0 ? (
+              <div className="grid gap-6 md:grid-cols-2">
+                {results.map((thesis) => (
+                  <Link to={`/thesis/${thesis.thesis_no}`} key={thesis.thesis_no} className="block bg-white border border-stone-200 rounded-lg p-6 hover:shadow-xl hover:border-amber-400 transition group">
+                    <div className="flex justify-between items-start mb-3">
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${thesis.type === 'PhD' ? 'bg-purple-100 text-purple-900' : 'bg-green-100 text-green-900'}`}>
+                        {thesis.type === 'PhD' ? 'PhD' : "Master's"}
+                      </span>
+                      <span className="text-stone-500 text-sm font-mono bg-stone-100 px-2 py-1 rounded">
+                        {thesis.year}
+                      </span>
+                    </div>
+                    <h3 className="text-xl font-bold text-amber-950 mb-2 group-hover:text-amber-700 transition-colors line-clamp-2">
+                      {thesis.title}
                     </h3>
-                  </div>
-                </div>
-
-                <div className="pl-4 mt-4 text-base text-stone-700 font-medium">
-                  <span className="text-stone-900 font-bold">{tez.author?.first_name} {tez.author?.last_name}</span> 
-                  <span className="mx-3 text-amber-800/50 font-bold">•</span>
-                  <span className="italic">{tez.institute?.university?.university_name}</span>
-                </div>
-
-                <p className="pl-4 mt-4 text-stone-700 text-base line-clamp-2 italic leading-relaxed">
-                  {tez.abstract}
-                </p>
-              </Link>
-            ))}
-          </div>
+                    <p className="text-stone-600 text-sm mb-4 line-clamp-2">
+                      {thesis.abstract}
+                    </p>
+                    <div className="flex items-center justify-between text-sm text-stone-500 border-t border-stone-100 pt-3">
+                      <span className="font-bold text-stone-700 flex items-center gap-2">
+                        <BookOpen size={16}/> {thesis.author?.first_name} {thesis.author?.last_name}
+                      </span>
+                      <span className="flex items-center gap-1 text-amber-800 font-bold group-hover:translate-x-1 transition-transform">
+                        Details <ArrowRight size={16} />
+                      </span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : hasSearched && (
+              <div className="text-center py-12 bg-stone-100 rounded-lg border-2 border-dashed border-stone-300">
+                <p className="text-stone-500 font-bold text-lg">No results found matching your criteria.</p>
+              </div>
+            )}
+          </>
         )}
-      </main>
+      </div>
     </div>
   )
 }

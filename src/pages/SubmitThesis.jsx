@@ -8,22 +8,18 @@ export default function SubmitThesis() {
   const [yukleniyor, setYukleniyor] = useState(false)
   const [hata, setHata] = useState(null)
   
-  // Referans Veriler
   const [diller, setDiller] = useState([])
   const [enstituler, setEnstituler] = useState([])
   const [kisiler, setKisiler] = useState([]) 
   const [tumAnahtarKel, setTumAnahtarKel] = useState([]) 
   const [tumKonular, setTumKonular] = useState([])     
 
-  // Seçilen Etiketler (Çoklu seçim için)
   const [secilenAnahtarKelimeler, setSecilenAnahtarKelimeler] = useState([])
   const [secilenKonular, setSecilenKonular] = useState([])
 
-  // Manuel giriş state'leri
   const [yeniAnahtarKelime, setYeniAnahtarKelime] = useState('')
   const [yeniKonu, setYeniKonu] = useState('')
 
-  // Form verileri
   const [formData, setFormData] = useState({
     title: '',
     abstract: '',
@@ -38,7 +34,6 @@ export default function SubmitThesis() {
     co_supervisor_id: ''
   })
 
-  // Verileri Çek
   useEffect(() => {
     async function verileriGetir() {
       try {
@@ -55,7 +50,7 @@ export default function SubmitThesis() {
         setTumKonular(topicData || [])
 
       } catch (error) {
-        console.error('Veri çekme hatası:', error)
+        console.error('Data error:', error)
       }
     }
     verileriGetir()
@@ -65,7 +60,6 @@ export default function SubmitThesis() {
     setFormData({ ...formData, [e.target.name]: e.target.value })
   }
 
-  // --- ANAHTAR KELİME İŞLEMLERİ ---
   const anahtarKelimeSec = (e) => {
     const secilenId = parseInt(e.target.value)
     if (!secilenId) return
@@ -95,14 +89,13 @@ export default function SubmitThesis() {
         setTumAnahtarKel([...tumAnahtarKel, data])
         setSecilenAnahtarKelimeler([...secilenAnahtarKelimeler, data])
         setYeniAnahtarKelime('')
-    } catch (err) { alert('Hata: ' + err.message) }
+    } catch (err) { alert('Error: ' + err.message) }
   }
 
   const anahtarKelimeCikar = (id) => {
     setSecilenAnahtarKelimeler(secilenAnahtarKelimeler.filter(k => k.keyword_id !== id))
   }
 
-  // --- KONU ALANI İŞLEMLERİ ---
   const konuSec = (e) => {
     const secilenId = parseInt(e.target.value)
     if (!secilenId) return
@@ -132,24 +125,22 @@ export default function SubmitThesis() {
         setTumKonular([...tumKonular, data])
         setSecilenKonular([...secilenKonular, data])
         setYeniKonu('')
-    } catch (err) { alert('Hata: ' + err.message) }
+    } catch (err) { alert('Error: ' + err.message) }
   }
 
   const konuCikar = (id) => {
     setSecilenKonular(secilenKonular.filter(t => t.topic_id !== id))
   }
 
-  // --- KAYDETME İŞLEMİ ---
   const handleSubmit = async (e) => {
     e.preventDefault()
     
-    // GÜVENLİK KONTROLÜ: Kutuda yazılı ama eklenmemiş veri var mı?
     if (yeniAnahtarKelime.trim()) {
-        alert("Dikkat: Anahtar kelime kutusunda yazılı metin var ama (+) butonuna basarak eklemediniz. Lütfen ekleyip tekrar deneyin.")
+        alert("Warning: You have text in the keyword box but haven't added it using the (+) button. Please add it and try again.")
         return
     }
     if (yeniKonu.trim()) {
-        alert("Dikkat: Konu alanında yazılı metin var ama (+) butonuna basarak eklemediniz. Lütfen ekleyip tekrar deneyin.")
+        alert("Warning: You have text in the topic box but haven't added it using the (+) button. Please add it and try again.")
         return
     }
 
@@ -179,7 +170,6 @@ export default function SubmitThesis() {
 
       if (thesisError) throw thesisError
 
-      // Many-to-Many ilişkileri ekle
       if (secilenAnahtarKelimeler.length > 0) {
         const keywordInserts = secilenAnahtarKelimeler.map(k => ({
           thesis_no: randomThesisNo,
@@ -196,10 +186,10 @@ export default function SubmitThesis() {
         await supabase.from('thesis_subject_topic').insert(topicInserts)
       }
 
-      alert('Tez başarıyla gönderildi! Admin onayından sonra yayınlanacaktır.')
+      alert('Thesis submitted successfully! It will be published after admin approval.')
       navigate('/') 
     } catch (err) {
-      setHata('Kayıt sırasında hata oluştu: ' + err.message)
+      setHata('Error during submission: ' + err.message)
     } finally {
       setYukleniyor(false)
     }
@@ -212,8 +202,8 @@ export default function SubmitThesis() {
         <div className="bg-amber-900 p-6 flex items-center gap-4 text-amber-50">
           <BookPlus className="w-10 h-10" />
           <div>
-            <h1 className="text-3xl font-bold font-serif tracking-wide">Yeni Tez Kaydı</h1>
-            <p className="text-amber-200 text-sm">Lütfen tez bilgilerini eksiksiz doldurunuz.</p>
+            <h1 className="text-3xl font-bold font-serif tracking-wide">New Thesis Submission</h1>
+            <p className="text-amber-200 text-sm">Please fill in the thesis details completely.</p>
           </div>
         </div>
 
@@ -225,59 +215,56 @@ export default function SubmitThesis() {
             </div>
           )}
 
-          {/* BÖLÜM 1: Temel Bilgiler */}
           <div className="space-y-6">
-            <h3 className="text-xl font-bold text-amber-950 border-b-2 border-stone-300 pb-2">Eser Bilgileri</h3>
+            <h3 className="text-xl font-bold text-amber-950 border-b-2 border-stone-300 pb-2">Work Details</h3>
             
             <div className="grid grid-cols-1 gap-6">
               <div>
-                <label className="block text-sm font-bold text-stone-700 mb-2">Tez Başlığı</label>
+                <label className="block text-sm font-bold text-stone-700 mb-2">Thesis Title</label>
                 <input required type="text" name="title" value={formData.title} onChange={handleChange}
-                  className="w-full bg-white border-2 border-stone-300 rounded p-3 text-stone-900 focus:ring-amber-900 focus:border-amber-900" placeholder="Tezin tam başlığını giriniz..." />
+                  className="w-full bg-white border-2 border-stone-300 rounded p-3 text-stone-900 focus:ring-amber-900 focus:border-amber-900" placeholder="Enter the full title of the thesis..." />
               </div>
               
               <div>
-                <label className="block text-sm font-bold text-stone-700 mb-2">Özet (Abstract)</label>
+                <label className="block text-sm font-bold text-stone-700 mb-2">Abstract</label>
                 <textarea required name="abstract" rows="5" value={formData.abstract} onChange={handleChange}
-                  className="w-full bg-white border-2 border-stone-300 rounded p-3 text-stone-900 focus:ring-amber-900 focus:border-amber-900" placeholder="Tezin kısa özetini buraya yazınız..." />
+                  className="w-full bg-white border-2 border-stone-300 rounded p-3 text-stone-900 focus:ring-amber-900 focus:border-amber-900" placeholder="Write a short abstract here..." />
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                <div>
-                <label className="block text-sm font-bold text-stone-700 mb-2">Tez Türü</label>
+                <label className="block text-sm font-bold text-stone-700 mb-2">Thesis Type</label>
                 <select name="type" value={formData.type} onChange={handleChange} className="w-full bg-white border-2 border-stone-300 rounded p-3">
-                  <option value="Master">Yüksek Lisans</option>
-                  <option value="PhD">Doktora</option>
+                  <option value="Master">Master's</option>
+                  <option value="PhD">PhD</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-stone-700 mb-2">Yıl</label>
+                <label className="block text-sm font-bold text-stone-700 mb-2">Year</label>
                 <input required type="number" name="year" value={formData.year} onChange={handleChange} className="w-full bg-white border-2 border-stone-300 rounded p-3" />
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-stone-700 mb-2">Sayfa Sayısı</label>
+                <label className="block text-sm font-bold text-stone-700 mb-2">Number of Pages</label>
                 <input required type="number" name="num_of_pages" value={formData.num_of_pages} onChange={handleChange} className="w-full bg-white border-2 border-stone-300 rounded p-3" />
               </div>
             </div>
           </div>
 
-          {/* BÖLÜM 2: Etiketler ve Konular */}
           <div className="space-y-6">
-             <h3 className="text-xl font-bold text-amber-950 border-b-2 border-stone-300 pb-2">Konu ve Anahtar Kelimeler</h3>
+             <h3 className="text-xl font-bold text-amber-950 border-b-2 border-stone-300 pb-2">Subject and Keywords</h3>
              
              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 
-                {/* Anahtar Kelimeler */}
                 <div className="bg-stone-50 p-4 rounded border border-stone-200">
                    <label className="block text-sm font-bold text-stone-700 mb-2 flex items-center gap-2">
-                     <Tag size={16} /> Anahtar Kelimeler
+                     <Tag size={16} /> Keywords
                    </label>
                    
                    <select onChange={anahtarKelimeSec} className="w-full bg-white border-2 border-stone-300 rounded p-2 mb-3">
-                     <option value="">Listeden Seçiniz...</option>
+                     <option value="">Select from list...</option>
                      {tumAnahtarKel.map(k => (
                        <option key={k.keyword_id} value={k.keyword_id}>{k.keyword_text}</option>
                      ))}
@@ -286,12 +273,12 @@ export default function SubmitThesis() {
                    <div className="flex gap-2 mb-4">
                      <input 
                        type="text" 
-                       placeholder="veya Yeni Kelime Yaz..." 
+                       placeholder="or Type New Keyword..." 
                        className="flex-1 border-2 border-stone-300 rounded p-2 text-sm"
                        value={yeniAnahtarKelime}
                        onChange={(e) => setYeniAnahtarKelime(e.target.value)}
                      />
-                     <button type="button" onClick={manuelAnahtarKelimeEkle} className="bg-amber-800 text-white p-2 rounded hover:bg-amber-900 transition" title="Ekle">
+                     <button type="button" onClick={manuelAnahtarKelimeEkle} className="bg-amber-800 text-white p-2 rounded hover:bg-amber-900 transition" title="Add">
                        <Plus size={20} />
                      </button>
                    </div>
@@ -306,14 +293,13 @@ export default function SubmitThesis() {
                    </div>
                 </div>
 
-                {/* Konu Alanları */}
                 <div className="bg-stone-50 p-4 rounded border border-stone-200">
                    <label className="block text-sm font-bold text-stone-700 mb-2 flex items-center gap-2">
-                     <Hash size={16} /> Konu Alanları
+                     <Hash size={16} /> Subject Topics
                    </label>
                    
                    <select onChange={konuSec} className="w-full bg-white border-2 border-stone-300 rounded p-2 mb-3">
-                     <option value="">Listeden Seçiniz...</option>
+                     <option value="">Select from list...</option>
                      {tumKonular.map(t => (
                        <option key={t.topic_id} value={t.topic_id}>{t.topic_name}</option>
                      ))}
@@ -322,12 +308,12 @@ export default function SubmitThesis() {
                     <div className="flex gap-2 mb-4">
                      <input 
                        type="text" 
-                       placeholder="veya Yeni Konu Yaz..." 
+                       placeholder="or Type New Topic..." 
                        className="flex-1 border-2 border-stone-300 rounded p-2 text-sm"
                        value={yeniKonu}
                        onChange={(e) => setYeniKonu(e.target.value)}
                      />
-                     <button type="button" onClick={manuelKonuEkle} className="bg-blue-800 text-white p-2 rounded hover:bg-blue-900 transition" title="Ekle">
+                     <button type="button" onClick={manuelKonuEkle} className="bg-blue-800 text-white p-2 rounded hover:bg-blue-900 transition" title="Add">
                        <Plus size={20} />
                      </button>
                    </div>
@@ -345,15 +331,14 @@ export default function SubmitThesis() {
              </div>
           </div>
 
-          {/* BÖLÜM 3: Akademik Künye */}
           <div className="space-y-6 bg-stone-100 p-6 rounded-lg border border-stone-200">
-            <h3 className="text-xl font-bold text-amber-950 border-b-2 border-stone-300 pb-2">Akademik Künye</h3>
+            <h3 className="text-xl font-bold text-amber-950 border-b-2 border-stone-300 pb-2">Academic Info</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-bold text-stone-700 mb-2">Enstitü / Üniversite</label>
+                <label className="block text-sm font-bold text-stone-700 mb-2">Institute / University</label>
                 <select required name="institute_id" value={formData.institute_id} onChange={handleChange} className="w-full bg-white border-2 border-stone-300 rounded p-3">
-                  <option value="">Seçiniz...</option>
+                  <option value="">Select...</option>
                   {enstituler.map(inst => (
                     <option key={inst.institute_id} value={inst.institute_id}>
                       {inst.university?.university_name} - {inst.institute_name}
@@ -363,9 +348,9 @@ export default function SubmitThesis() {
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-stone-700 mb-2">Yazım Dili</label>
+                <label className="block text-sm font-bold text-stone-700 mb-2">Writing Language</label>
                 <select required name="language_id" value={formData.language_id} onChange={handleChange} className="w-full bg-white border-2 border-stone-300 rounded p-3">
-                  <option value="">Seçiniz...</option>
+                  <option value="">Select...</option>
                   {diller.map(lang => (
                     <option key={lang.language_id} value={lang.language_id}>{lang.language_name}</option>
                   ))}
@@ -373,9 +358,9 @@ export default function SubmitThesis() {
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-stone-700 mb-2">Yazar</label>
+                <label className="block text-sm font-bold text-stone-700 mb-2">Author</label>
                 <select required name="author_id" value={formData.author_id} onChange={handleChange} className="w-full bg-white border-2 border-stone-300 rounded p-3">
-                  <option value="">Yazar Seçiniz...</option>
+                  <option value="">Select Author...</option>
                   {kisiler.map(kisi => (
                     <option key={kisi.person_id} value={kisi.person_id}>{kisi.first_name} {kisi.last_name}</option>
                   ))}
@@ -383,9 +368,9 @@ export default function SubmitThesis() {
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-stone-700 mb-2">Danışman</label>
+                <label className="block text-sm font-bold text-stone-700 mb-2">Supervisor</label>
                 <select required name="supervisor_id" value={formData.supervisor_id} onChange={handleChange} className="w-full bg-white border-2 border-stone-300 rounded p-3">
-                  <option value="">Danışman Seçiniz...</option>
+                  <option value="">Select Supervisor...</option>
                   {kisiler.map(kisi => (
                     <option key={kisi.person_id} value={kisi.person_id}>{kisi.first_name} {kisi.last_name}</option>
                   ))}
@@ -394,9 +379,9 @@ export default function SubmitThesis() {
             </div>
             
             <div>
-                <label className="block text-sm font-bold text-stone-700 mb-2">Eş Danışman (Opsiyonel)</label>
+                <label className="block text-sm font-bold text-stone-700 mb-2">Co-Supervisor (Optional)</label>
                 <select name="co_supervisor_id" value={formData.co_supervisor_id} onChange={handleChange} className="w-full bg-white border-2 border-stone-300 rounded p-3">
-                  <option value="">Yok</option>
+                  <option value="">None</option>
                   {kisiler.map(kisi => (
                     <option key={kisi.person_id} value={kisi.person_id}>{kisi.first_name} {kisi.last_name}</option>
                   ))}
@@ -410,10 +395,10 @@ export default function SubmitThesis() {
               disabled={yukleniyor}
               className="flex items-center gap-2 bg-amber-900 text-amber-50 px-8 py-4 rounded-lg font-bold hover:bg-amber-800 transition-all shadow-lg hover:shadow-xl disabled:opacity-50"
             >
-              {yukleniyor ? 'Kaydediliyor...' : (
+              {yukleniyor ? 'Saving...' : (
                 <>
                   <Save className="w-5 h-5" />
-                  Tezi Kaydet ve Gönder
+                  Save and Submit Thesis
                 </>
               )}
             </button>

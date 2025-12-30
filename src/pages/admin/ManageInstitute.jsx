@@ -5,14 +5,12 @@ import { Link } from 'react-router-dom'
 
 export default function ManageInstitute() {
   const [institutes, setInstitutes] = useState([])
-  const [universities, setUniversities] = useState([]) // Dropdown için
+  const [universities, setUniversities] = useState([]) 
   const [form, setForm] = useState({ name: '', uni_id: '' })
   const [yukleniyor, setYukleniyor] = useState(true)
 
-  // Verileri Çek (Hem Enstitüler hem Üniversiteler)
   const fetchData = async () => {
     try {
-      // 1. Enstitüleri üniversite adıyla beraber çek
       const { data: instData, error: instError } = await supabase
         .from('institute')
         .select('*, university(university_name)')
@@ -20,7 +18,6 @@ export default function ManageInstitute() {
       
       if (instError) throw instError
 
-      // 2. Üniversite listesini çek (Ekleme kutusu için)
       const { data: uniData, error: uniError } = await supabase
         .from('university')
         .select('*')
@@ -31,7 +28,7 @@ export default function ManageInstitute() {
       setInstitutes(instData)
       setUniversities(uniData)
     } catch (error) {
-      alert('Veri hatası: ' + error.message)
+      alert('Data error: ' + error.message)
     } finally {
       setYukleniyor(false)
     }
@@ -41,11 +38,10 @@ export default function ManageInstitute() {
     fetchData()
   }, [])
 
-  // Ekleme Fonksiyonu
   const handleAdd = async (e) => {
     e.preventDefault()
     if (!form.name.trim() || !form.uni_id) {
-      alert('Lütfen hem enstitü adını hem de üniversiteyi seçin.')
+      alert('Please select both the institute name and the university.')
       return
     }
 
@@ -62,16 +58,15 @@ export default function ManageInstitute() {
 
       if (error) throw error
 
-      setForm({ name: '', uni_id: '' }) // Formu temizle
-      fetchData() // Listeyi yenile
+      setForm({ name: '', uni_id: '' }) 
+      fetchData() 
     } catch (error) {
-      alert('Ekleme hatası: ' + error.message)
+      alert('Add error: ' + error.message)
     }
   }
 
-  // Silme Fonksiyonu
   const handleDelete = async (id) => {
-    if (!window.confirm('Bu enstitüyü silmek istediğinize emin misiniz? (Bağlı tezler varsa silinemez)')) return
+    if (!window.confirm('Are you sure you want to delete this institute? (Cannot be deleted if there are associated theses)')) return
 
     try {
       const { error } = await supabase
@@ -82,7 +77,7 @@ export default function ManageInstitute() {
       if (error) throw error
       fetchData()
     } catch (error) {
-      alert('Silme hatası (Muhtemelen bu enstitüye ait tezler var): ' + error.message)
+      alert('Deletion error (There are likely theses linked to this institute): ' + error.message)
     }
   }
 
@@ -90,23 +85,21 @@ export default function ManageInstitute() {
     <div className="max-w-4xl mx-auto">
       <Link to="/admin" className="flex items-center text-stone-600 hover:text-amber-900 mb-6 font-bold transition-colors w-fit">
         <ArrowLeft className="w-5 h-5 mr-2" />
-        Yönetim Paneline Dön
+        Return to Dashboard
       </Link>
 
       <div className="bg-[#faf7f2] shadow-xl rounded-xl overflow-hidden border-2 border-stone-300">
         
-        {/* Başlık */}
         <div className="bg-amber-900 p-6 text-amber-50 flex items-center gap-3">
           <Landmark className="w-8 h-8" />
           <div>
-            <h1 className="text-2xl font-bold font-serif">Enstitü Yönetimi</h1>
-            <p className="text-amber-200 text-sm">Üniversitelere bağlı enstitüleri düzenleyin.</p>
+            <h1 className="text-2xl font-bold font-serif">Institute Management</h1>
+            <p className="text-amber-200 text-sm">Manage institutes affiliated with universities.</p>
           </div>
         </div>
 
         <div className="p-8">
           
-          {/* Ekleme Formu */}
           <form onSubmit={handleAdd} className="grid md:grid-cols-3 gap-4 mb-10 bg-white p-4 rounded-lg border border-stone-200 shadow-sm">
             <div className="md:col-span-1">
               <select 
@@ -114,7 +107,7 @@ export default function ManageInstitute() {
                 value={form.uni_id}
                 onChange={(e) => setForm({...form, uni_id: e.target.value})}
               >
-                <option value="">Üniversite Seç...</option>
+                <option value="">Select University...</option>
                 {universities.map(u => (
                   <option key={u.university_id} value={u.university_id}>{u.university_name}</option>
                 ))}
@@ -123,7 +116,7 @@ export default function ManageInstitute() {
             <div className="md:col-span-2 flex gap-2">
               <input
                 type="text"
-                placeholder="Enstitü Adı (Örn: Fen Bilimleri Enstitüsü)..."
+                placeholder="Institute Name (e.g. Graduate School of Natural and Applied Sciences)..."
                 className="flex-1 border-2 border-stone-300 rounded-md p-3 text-stone-900 focus:ring-amber-900 focus:border-amber-900"
                 value={form.name}
                 onChange={(e) => setForm({...form, name: e.target.value})}
@@ -132,16 +125,15 @@ export default function ManageInstitute() {
                 type="submit" 
                 className="bg-amber-700 hover:bg-amber-800 text-white px-6 py-2 rounded-md font-bold flex items-center gap-2 transition-colors whitespace-nowrap"
               >
-                <Plus size={20} /> Ekle
+                <Plus size={20} /> Add
               </button>
             </div>
           </form>
 
-          {/* Liste */}
-          <h3 className="text-xl font-bold text-amber-950 mb-4 border-b-2 border-stone-300 pb-2">Kayıtlı Enstitüler</h3>
+          <h3 className="text-xl font-bold text-amber-950 mb-4 border-b-2 border-stone-300 pb-2">Registered Institutes</h3>
           
           {yukleniyor ? (
-            <div className="text-center p-4">Yükleniyor...</div>
+            <div className="text-center p-4">Loading...</div>
           ) : (
             <div className="space-y-3">
               {institutes.map((inst) => (
@@ -151,14 +143,14 @@ export default function ManageInstitute() {
                       {inst.institute_name}
                     </span>
                     <span className="text-sm text-amber-800 font-bold flex items-center gap-1">
-                      <span className="text-stone-400 font-normal">Bağlı Olduğu:</span> 
+                      <span className="text-stone-400 font-normal">Affiliated with:</span> 
                       {inst.university?.university_name}
                     </span>
                   </div>
                   <button 
                     onClick={() => handleDelete(inst.institute_id)}
                     className="text-stone-400 hover:text-red-600 p-2 rounded transition-colors"
-                    title="Sil"
+                    title="Delete"
                   >
                     <Trash2 size={20} />
                   </button>

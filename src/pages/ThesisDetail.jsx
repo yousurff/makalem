@@ -1,162 +1,146 @@
-// src/pages/ThesisDetail.jsx - KİTAP GÖRÜNÜMLÜ HALİ
 import { useEffect, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { ArrowLeft, BookOpen } from 'lucide-react' // Kitap ikonu eklendi
+import { ArrowLeft, BookOpen, Calendar, FileText, User, Building2, Languages, Hash, Tag } from 'lucide-react'
 
 export default function ThesisDetail() {
   const { id } = useParams()
-  const navigate = useNavigate()
-  const [tez, setTez] = useState(null)
-  const [yukleniyor, setYukleniyor] = useState(true)
+  const [thesis, setThesis] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
-    async function detayGetir() {
+    async function fetchThesisDetail() {
       try {
         const { data, error } = await supabase
           .from('thesis')
-          .select(`*, author:person!author_id(*), supervisor:person!supervisor_id(*), co_supervisor:person!co_supervisor_id(*), language:language(*), institute:institute(*, university:university(*)), thesis_keyword(keyword(*)), thesis_subject_topic(subject_topic(*))`)
+          .select(`
+            *,
+            author:person!author_id(first_name, last_name),
+            supervisor:person!supervisor_id(first_name, last_name),
+            co_supervisor:person!co_supervisor_id(first_name, last_name),
+            institute:institute(institute_name, university(university_name)),
+            language:language(language_name),
+            thesis_keyword(keyword(keyword_text)),
+            thesis_subject_topic(subject_topic(topic_name))
+          `)
           .eq('thesis_no', id)
           .single()
 
         if (error) throw error
-        setTez(data)
+        setThesis(data)
       } catch (err) {
-        console.error('Detay çekme hatası:', err)
+        setError('Thesis not found or an error occurred.')
       } finally {
-        setYukleniyor(false)
+        setLoading(false)
       }
     }
-    if (id) detayGetir()
+    fetchThesisDetail()
   }, [id])
 
-  if (yukleniyor) return <div className="flex justify-center items-center min-h-[50vh]"><div className="animate-spin rounded-full h-16 w-16 border-b-4 border-amber-900 border-t-transparent"></div></div>
-  if (!tez) return <div className="text-center p-20 text-amber-900 font-bold text-xl">Bu eser kütüphanede bulunamadı.</div>
+  if (loading) return <div className="text-center p-20 text-amber-900 font-bold">Loading thesis details...</div>
+  if (error || !thesis) return <div className="text-center p-20 text-red-600 font-bold">{error || 'Thesis not found.'}</div>
 
   return (
-    <div className="max-w-5xl mx-auto p-6">
-      
-      <button 
-        onClick={() => navigate(-1)} 
-        className="group flex items-center text-stone-700 hover:text-amber-900 mb-8 transition-colors font-bold text-lg"
-      >
-        <ArrowLeft className="w-6 h-6 mr-2 group-hover:-translate-x-2 transition-transform" />
-        Raflara Geri Dön
-      </button>
+    <div className="max-w-5xl mx-auto pb-12">
+      <Link to="/" className="inline-flex items-center text-stone-600 hover:text-amber-900 mb-6 font-bold transition-colors">
+        <ArrowLeft className="mr-2" size={20} /> Back to Library
+      </Link>
 
-      {/* Ana Kitap Sayfası Konteyneri - Beyaz yok, parşömen rengi */}
-      <div className="bg-[#faf7f2] shadow-2xl rounded-r-3xl rounded-l-md overflow-hidden border-2 border-stone-400 relative">
-        {/* Sol tarafta cilt efekti */}
-        <div className="absolute left-0 top-0 bottom-0 w-4 bg-gradient-to-r from-stone-500 to-[#faf7f2] opacity-20"></div>
+      <div className="bg-[#faf7f2] shadow-2xl rounded-xl overflow-hidden border-2 border-stone-300">
+        <div className="bg-stone-100 border-b border-stone-200 p-8 text-center relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-2 bg-amber-900"></div>
+          
+          <span className={`inline-block px-4 py-1 mb-4 rounded-full text-sm font-bold tracking-wider shadow-sm border ${thesis.type === 'PhD' ? 'bg-purple-100 text-purple-900 border-purple-200' : 'bg-green-100 text-green-900 border-green-200'}`}>
+            {thesis.type === 'PhD' ? 'PHD DISSERTATION' : "MASTER'S THESIS"}
+          </span>
+          
+          <h1 className="text-3xl md:text-4xl font-extrabold text-amber-950 mb-4 leading-tight font-serif">
+            {thesis.title}
+          </h1>
 
-        {/* Üst Başlık Kısmı - Koyu Kahve Degrade */}
-        <div className="bg-gradient-to-r from-[#eaddc5] to-[#d6c7a8] p-10 border-b-4 border-amber-900/20 relative overflow-hidden">
-          <div className="absolute right-0 top-0 opacity-10 -mr-10 -mt-10">
-            <BookOpen size={200} className="text-amber-950" />
-          </div>
-
-          <div className="flex flex-wrap gap-3 mb-6 relative z-10">
-            <span className={`px-4 py-2 text-sm font-bold rounded-md border-2 ${tez.type === 'PhD' ? 'bg-amber-200 text-amber-950 border-amber-400' : 'bg-stone-200 text-stone-900 border-stone-400'}`}>
-              {tez.type === 'PhD' ? 'Doktora Tezi' : 'Yüksek Lisans Tezi'}
+          <div className="flex flex-wrap justify-center gap-4 text-stone-600 font-medium">
+            <span className="flex items-center gap-1 bg-white px-3 py-1 rounded border border-stone-200">
+              <Calendar size={16} className="text-amber-800"/> {thesis.year}
             </span>
-            <span className="px-4 py-2 text-sm font-bold rounded-md bg-[#faf7f2]/80 text-stone-800 border-2 border-stone-400">
-              {tez.year}
+            <span className="flex items-center gap-1 bg-white px-3 py-1 rounded border border-stone-200">
+              <Languages size={16} className="text-amber-800"/> {thesis.language?.language_name}
             </span>
-            <span className="px-4 py-2 text-sm font-bold rounded-md bg-[#faf7f2]/80 text-stone-800 border-2 border-stone-400">
-              {tez.language?.language_name}
+            <span className="flex items-center gap-1 bg-white px-3 py-1 rounded border border-stone-200">
+              <FileText size={16} className="text-amber-800"/> {thesis.num_of_pages} Pages
             </span>
-          </div>
-          <h1 className="text-4xl md:text-5xl font-extrabold text-amber-950 mb-4 leading-tight relative z-10" style={{ textShadow: '1px 1px 0px #fff4e0' }}>{tez.title}</h1>
-          <div className="text-amber-900 font-bold text-xl flex flex-col md:flex-row md:items-center gap-2 md:gap-4 relative z-10">
-            <span className="border-b-2 border-amber-900/30 pb-1">{tez.institute?.university?.university_name}</span>
-            <span className="hidden md:inline text-amber-700">•</span>
-            <span className="text-amber-800 text-lg italic">{tez.institute?.institute_name}</span>
           </div>
         </div>
 
-        {/* İçerik Gövdesi */}
-        <div className="p-10 grid grid-cols-1 md:grid-cols-3 gap-12 bg-[#fdfbf7]">
-          
-          {/* SOL KOLON: Özet ve Detaylar */}
-          <div className="md:col-span-2 space-y-10">
-            <div className="prose prose-stone prose-lg max-w-none">
-              <h3 className="text-2xl font-bold text-amber-950 mb-4 flex items-center gap-3 border-b-2 border-amber-900/20 pb-2">
-                <BookOpen className="w-6 h-6 text-amber-800" />
-                Eser Özeti
-              </h3>
-              {/* Yazı tipi serif ve okunaklı, renk tam siyah değil koyu kahve */}
-              <p className="text-stone-800 leading-loose text-justify text-lg font-serif pl-4 border-l-4 border-amber-900/30 italic">
-                {tez.abstract}
-              </p>
+        <div className="p-8 space-y-8">
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className="bg-white p-5 rounded-xl border border-stone-200 shadow-sm text-center">
+              <div className="inline-flex p-3 rounded-full bg-amber-50 text-amber-900 mb-3">
+                <User size={24} />
+              </div>
+              <p className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-1">Author</p>
+              <p className="font-bold text-stone-900 text-lg">{thesis.author?.first_name} {thesis.author?.last_name}</p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 pt-8 border-t-2 border-dashed border-stone-300">
-              <div>
-                 <h3 className="text-sm font-extrabold text-stone-600 uppercase tracking-widest mb-4">Anahtar Kelimeler</h3>
-                 <div className="flex flex-wrap gap-3 pl-2">
-                   {tez.thesis_keyword?.map((item, index) => (
-                     <span key={index} className="px-4 py-2 bg-[#eaddc5] text-amber-950 rounded-lg text-sm font-bold border-b-2 border-r-2 border-amber-900/20 shadow-sm">
-                       {item.keyword?.keyword_text}
-                     </span>
-                   ))}
-                 </div>
+            <div className="bg-white p-5 rounded-xl border border-stone-200 shadow-sm text-center">
+              <div className="inline-flex p-3 rounded-full bg-amber-50 text-amber-900 mb-3">
+                <BookOpen size={24} />
               </div>
+              <p className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-1">Supervisor</p>
+              <p className="font-bold text-stone-900 text-lg">{thesis.supervisor?.first_name} {thesis.supervisor?.last_name}</p>
+            </div>
 
-              <div>
-                 <h3 className="text-sm font-extrabold text-stone-600 uppercase tracking-widest mb-4">Konu Alanları</h3>
-                 <div className="flex flex-wrap gap-3 pl-2">
-                   {tez.thesis_subject_topic?.map((item, index) => (
-                     <span key={index} className="px-4 py-2 bg-stone-200 text-stone-900 rounded-lg text-sm font-bold border-b-2 border-r-2 border-stone-400 shadow-sm">
-                       {item.subject_topic?.topic_name}
-                     </span>
-                   ))}
-                 </div>
+            <div className="bg-white p-5 rounded-xl border border-stone-200 shadow-sm text-center">
+              <div className="inline-flex p-3 rounded-full bg-amber-50 text-amber-900 mb-3">
+                <Building2 size={24} />
               </div>
+              <p className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-1">Institution</p>
+              <p className="font-bold text-stone-900 text-sm">{thesis.institute?.university?.university_name}</p>
+              <p className="text-stone-600 text-xs mt-1">{thesis.institute?.institute_name}</p>
             </div>
           </div>
 
-          {/* SAĞ KOLON: Künye Kartı - Daha koyu bir kağıt rengi */}
-          <div className="bg-[#f0eadd] p-8 rounded-xl h-fit space-y-8 border-2 border-[#d6c7a8] shadow-inner relative">
-            <div className="absolute top-0 left-0 w-full h-4 bg-amber-900/10"></div>
-            
-            <div className="mt-4">
-              <span className="block text-xs font-extrabold text-stone-500 uppercase mb-2 tracking-widest">Eser Sahibi (Yazar)</span>
-              <div className="text-amber-950 font-extrabold text-2xl bg-[#faf7f2] p-3 rounded border-l-4 border-amber-900">
-                {tez.author?.first_name} {tez.author?.last_name}
+          <div>
+            <h3 className="text-xl font-bold text-amber-950 mb-3 flex items-center gap-2 border-b-2 border-stone-200 pb-2">
+              <FileText className="text-amber-700"/> Abstract
+            </h3>
+            <div className="bg-white p-6 rounded-xl border border-stone-200 text-stone-700 leading-relaxed text-justify shadow-inner">
+              {thesis.abstract}
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            <div>
+              <h3 className="text-lg font-bold text-stone-800 mb-3 flex items-center gap-2">
+                <Tag size={18} className="text-stone-400"/> Keywords
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {thesis.thesis_keyword?.map((k, i) => (
+                  <span key={i} className="px-3 py-1 bg-stone-200 text-stone-800 rounded-lg text-sm font-semibold border border-stone-300">
+                    {k.keyword?.keyword_text}
+                  </span>
+                ))}
+                {(!thesis.thesis_keyword || thesis.thesis_keyword.length === 0) && <span className="text-stone-400 italic">No keywords.</span>}
               </div>
             </div>
 
             <div>
-              <span className="block text-xs font-extrabold text-stone-500 uppercase mb-2 tracking-widest">Tez Danışmanı</span>
-              <div className="text-stone-900 font-bold text-xl bg-[#faf7f2] p-3 rounded border-l-4 border-stone-500">
-                {tez.supervisor?.first_name} {tez.supervisor?.last_name}
+              <h3 className="text-lg font-bold text-stone-800 mb-3 flex items-center gap-2">
+                <Hash size={18} className="text-stone-400"/> Subject Topics
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {thesis.thesis_subject_topic?.map((t, i) => (
+                  <span key={i} className="px-3 py-1 bg-amber-100 text-amber-900 rounded-lg text-sm font-semibold border border-amber-200">
+                    {t.subject_topic?.topic_name}
+                  </span>
+                ))}
+                {(!thesis.thesis_subject_topic || thesis.thesis_subject_topic.length === 0) && <span className="text-stone-400 italic">No topics.</span>}
               </div>
             </div>
+          </div>
 
-            {tez.co_supervisor && (
-              <div>
-                <span className="block text-xs font-extrabold text-stone-500 uppercase mb-2 tracking-widest">Eş Danışman</span>
-                <div className="text-stone-800 font-bold text-lg bg-[#faf7f2] p-3 rounded border-l-4 border-stone-400">
-                  {tez.co_supervisor.first_name} {tez.co_supervisor.last_name}
-                </div>
-              </div>
-            )}
-
-            <div className="pt-8 border-t-2 border-stone-300 space-y-4 text-stone-700">
-              <div className="flex justify-between items-center bg-[#faf7f2] p-2 rounded">
-                <span className="text-sm font-bold">Sayfa Sayısı</span>
-                <span className="text-stone-900 font-extrabold text-lg">{tez.num_of_pages}</span>
-              </div>
-              <div className="flex justify-between items-center bg-[#faf7f2] p-2 rounded">
-                 <span className="text-sm font-bold">Teslim Tarihi</span>
-                 <span className="text-stone-900 font-extrabold text-sm">{tez.submission_date}</span>
-              </div>
-              <div className="flex justify-between items-center mt-6 pt-4 border-t border-stone-300">
-                 <span className="text-sm font-bold">Katalog No</span>
-                 <span className="text-amber-950 font-mono text-base bg-[#eaddc5] px-3 py-1 rounded border border-amber-900/30">#{tez.thesis_no}</span>
-              </div>
-            </div>
-
+          <div className="text-center pt-8 border-t border-stone-200">
+             <p className="text-stone-400 text-sm font-mono">Thesis Reference No: #{thesis.thesis_no}</p>
           </div>
         </div>
       </div>
