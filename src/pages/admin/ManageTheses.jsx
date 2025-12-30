@@ -29,12 +29,25 @@ export default function ManageTheses() {
     fetchTheses()
   }, [])
 
+  // GÜNCELLENEN SİLME FONKSİYONU
   const handleDelete = async (id) => {
     if (!window.confirm('DİKKAT! Bu tezi kalıcı olarak silmek üzeresiniz. Onaylıyor musunuz?')) return
 
     try {
+      // ADIM 1: Önce teze bağlı anahtar kelimeleri (Thesis_Keyword) sil
+      const { error: keywordError } = await supabase.from('thesis_keyword').delete().eq('thesis_no', id)
+      if (keywordError) console.log("Keyword silinirken uyarı:", keywordError)
+
+      // ADIM 2: Sonra teze bağlı konuları (Thesis_Subject_Topic) sil
+      const { error: topicError } = await supabase.from('thesis_subject_topic').delete().eq('thesis_no', id)
+      if (topicError) console.log("Topic silinirken uyarı:", topicError)
+
+      // ADIM 3: Artık bağı kalmadığı için Tezi silebiliriz
       const { error } = await supabase.from('thesis').delete().eq('thesis_no', id)
+
       if (error) throw error
+      
+      alert('Tez başarıyla silindi.')
       fetchTheses() // Listeyi yenile
     } catch (error) {
       alert('Silme hatası: ' + error.message)
